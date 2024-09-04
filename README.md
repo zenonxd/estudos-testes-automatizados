@@ -255,3 +255,186 @@ atributos com getters e setters.
 O ideal seria criar a classe de Testes, exatamente como está ali em cima depois implementar os métodos.
 
 ## Exercício JUnit vanilla
+
+## Inserindo tudo no projeto DSCatalog
+
+Até o momento, utilizamos o que aprendemos em um projetinho a parte. Agora, faremos em um projeto maior.
+
+## Annotations usadas nas classes de teste
+
+### 1. @SpringBootTest
+
+Carrega o contexto da aplicação **(teste de integração)**. Ou seja, é um teste lento, pois carrega muita coisa para ele
+rodar.
+
+Portanto, se usa essa anotação quando você quer carregar outros componentes do sistema.
+
+### 2. @SpringBootTest e @AutoConfigureMockMvc
+
+Quando você combina as duas anotações acima, você carrega o contexto da aplicação (teste de integração e web) e trata 
+as requisições sem subir o servidor tomcat.
+
+### 3. @WebMvcTest(Classe.class)
+
+Carrega o contexto, mas somente da camada web (teste de unidade: controlador), não vai carregar os outros (service,
+repository).
+
+### 4. @ExtendedWith(SpringExtension.class)
+
+Não carrega o contexto, mas permite usar recursos do Spring com JUnit (teste de unidade: service/component).
+
+### 5. @DataJpaTest
+
+Carrega somente os componentes relacionados ao Spring Data JPA. 
+
+Cada teste é transicional e dá rollblack no final (teste de unidade: repository).
+
+O rollback basicamente é: ele vai executar o que tem pra executar (do repository) acessando o banco de dados e depois 
+volta.
+
+## Primeiro teste no repository
+
+![img_10.png](img_10.png)
+
+## Organizando melhor código evitando repetição - Fixtures no JUnit, BeforeEach
+
+No caso acima, nós poderiamos ter instanciado uma variável de ID existente e outra de não existente para realizar o
+teste.
+
+Imagine outros métodos da mesma classe que também podem precisar da mesma coisa? Evitando repetição de código, podemos
+usar as **fixtures!** Elas nos permitem declarar alguma coisa, e executar elas em momentos específicos do teste.
+
+| Junit5      | Junit4       | Objetivo                                                                           |
+|-------------|--------------|------------------------------------------------------------------------------------|
+| @BeforeAll  | @BeforeClass | (instancia uma vez só) Preparação antes de todos tests da classe (método estático) |
+| @AfterAll   | @AfterClass  | Preparação depois de todos testes da classe (método estático)                      |
+| @BeforeEach | @Before      | (instancia mais de uma vez) Preparação antes de cada teste da classe               |
+| @AfterEach  | @After       | Preparação depois de cada tste da classe                                           |
+
+![img_11.png](img_11.png)
+
+Dando continuação ao exemplo acima de como instanciar essas clases para reaproveitá-las, faremos o seguinte:
+
+Iremos declarar as classes lá em cima e depois, inicializá-las dentro de um método com @BeforeEach.
+
+![img_12.png](img_12.png)
+
+Depois, é só reutilizar dentro dos métodos de teste.
+
+## Testando save com id nulo
+
+Quano criamos um novo item, o Spring entende que mesmo o id sendo nulo ele irá autoincrementar. 
+
+Faremos um teste para ver se ele irá fazer isso! Como temos 25 produtos, testaremos para ver se ele cria o 26.
+
+❗Lembrar de criar Factory para reutilizar classes:
+
+![img_13.png](img_13.png)
+
+![img_14.png](img_14.png)
+
+## Exercício - Teste Repository (Product com id existente e não existente)
+
+findById deveria:
+
+Retornar um Optional<Product> não vazio quando o id existir.
+
+Retornar um Optional<Product> vazio quando o id não existir.
+
+![img_15.png](img_15.png)
+
+## Começando com testes de ProductService, Mockito vs Mockbean
+
+Agora sim começaremos nos testes de unidade, onde testaremos aquela classe específica sem carregar um outro componente
+que ela depende.
+
+Para realizar isso, precisamos "mockar" essas dependências utilizando o Mockito.
+
+Como vimos na tabela acima, quando é um teste de unidade na camada de serviço usamos: @ExtendWith e para instanciar as
+dependências usaremos @Mock ou @MockBean.
+
+![img_17.png](img_17.png)
+
+### Mockito vs MockBean
+
+[Link de discussão sobre](https://stackoverflow.com/questions/44200720/difference-between-mock-mockbean-and-mockito-mock)
+
+![img_16.png](img_16.png)
+
+## Primeiro teste, simulando comportamento com Mockito
+
+Primeiramente a gente precisa lembrar que o teste de unidade (do service, neste caso), não irá acessar o repository que
+por sua vez acessará o banco, afinal o service não tem acesso ao banco de dados real.
+
+Primeira coisa: criar novamente o SetUp com BeforeEach e instanciar variáveis a serem reutilizadas.
+
+Além disso, dentro do SetUp colocaremos alguns comportamentos esperados do Mock:
+
+![img_18.png](img_18.png)
+
+Cabe destacar, esse método terá OUTROS métodos adicionais (findById, coisas de Pageable, etc.). Ele serve justamente
+para isso, **preparar cenários específicos**.
+
+Depois é o padrão dentro dos métodos, neste caso é para verificar o delete do service.
+
+![img_19.png](img_19.png)
+
+## Teste delete lança ResourceNotFoundException quando id não existe
+
+![img_20.png](img_20.png)
+
+Esse método da trigger nesse cenário que criamos no SetUp, por exemplo:
+
+![img_21.png](img_21.png)
+
+## Teste delete lança DatabaseException quando id dependente
+
+Pro teste passar, ele tem que passar pelo if do delete do service, pelo try e cair no cactch, veja:
+
+![img_23.png](img_23.png)
+
+Criar um dependentId:
+
+![img_22.png](img_22.png)
+
+E criar o cenário de trigger:
+
+![img_24.png](img_24.png)
+
+## Simulando comportamentos diversos com Mockito (findAll - Pageable, save, findById)
+
+### findAll (Pageable)
+
+1. Criar um atributo PageImpl do tipo Product chamado Page. Ele irá representar um tipo concreto que representa uma 
+página de dados.
+
+2. Criar um atributo do tipo Product.
+
+3. Instanciá-los dentro do SetUp:
+
+![img_25.png](img_25.png)
+
+### Para settar os triggers do Mockito:
+
+![img_26.png](img_26.png)
+
+### Save
+
+Só reaproveitar os atributos criados e usar o any() de novo.
+
+![img_27.png](img_27.png)
+
+### findById (existente e não existente)
+
+![img_28.png](img_28.png)
+
+## Testando findAllPaged do ProductService
+
+![img_29.png](img_29.png)
+
+
+
+
+
+
+
