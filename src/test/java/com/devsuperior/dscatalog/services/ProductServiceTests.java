@@ -3,6 +3,7 @@ package com.devsuperior.dscatalog.services;
 import com.devsuperior.dscatalog.dto.ProductDTO;
 import com.devsuperior.dscatalog.entities.Product;
 import com.devsuperior.dscatalog.factory.Factory;
+import com.devsuperior.dscatalog.repositories.CategoryRepository;
 import com.devsuperior.dscatalog.repositories.ProductRepository;
 import com.devsuperior.dscatalog.services.exceptions.DatabaseException;
 import com.devsuperior.dscatalog.services.exceptions.ResourceNotFoundException;
@@ -36,11 +37,15 @@ public class ProductServiceTests {
     @Mock
     private ProductRepository productRepository;
 
+    @Mock
+    private CategoryRepository categoryRepository;
+
     private Long existingId;
     private Long nonExistingId;
     private Long dependentId;
     private PageImpl<Product> page;
     private Product product;
+    private ProductDTO productDTO;
 
     @BeforeEach
     void setUp() throws Exception {
@@ -48,6 +53,7 @@ public class ProductServiceTests {
         nonExistingId = 1000L;
         dependentId = 3L;
         product = Factory.createProduct();
+        productDTO = Factory.createProductDTO();
         page = new PageImpl<>(List.of(product));
 
 
@@ -65,6 +71,16 @@ public class ProductServiceTests {
         //findById com ID inexistente retorna Optional Product vazio
         Mockito.when(productRepository.findById(nonExistingId)).thenReturn(Optional.empty());
 
+        //dto
+
+        //findbyId
+        Mockito.when(productRepository.findById(existingId)).thenReturn(Optional.of(product));
+        Mockito.when(productRepository.findById(nonExistingId)).thenReturn(Optional.of(product));
+
+
+        //update
+        Mockito.when(productRepository.getReferenceById(existingId)).thenReturn(product);
+        Mockito.when(productRepository.getReferenceById(nonExistingId)).thenThrow(ResourceNotFoundException.class);
 
         //configurando o comportamento esperado para o método existsById do seu mock productRepository.
         // Isso define o que o mock deve retornar quando chamado com diferentes IDs.
@@ -112,4 +128,37 @@ public class ProductServiceTests {
            productService.delete(dependentId);
         });
     }
+
+    @Test
+    public void findByIdShouldReturnProductDtoWhenIdExists() {
+        ProductDTO result = productService.findById(existingId);
+
+        Assertions.assertNotNull(result);
+        Mockito.verify(productRepository).findById(existingId);
+    }
+
+    @Test
+    public void findByIdShouldThrowResourceNotFoundExceptionWhenIdDoesntExist() {
+        Assertions.assertThrows(ResourceNotFoundException.class, () -> {
+           productService.findById(nonExistingId);
+        });
+    }
+
+    @Test
+    public void updateShouldReturnProductDtoWhenIdExists() {
+        ProductDTO result = productService.update(existingId, productDTO);
+
+
+        Assertions.assertNotNull(result);
+        Mockito.verify(productRepository).save(product);
+    }
+
+    @Test
+    public void updateShouldThrowResourceNotFoundExceptionWhenIdDoesntExist() {
+        Assertions.assertThrows(ResourceNotFoundException.class, () -> {
+            productService.update(nonExistingId, productDTO);
+        });
+    }
+
+
 }
