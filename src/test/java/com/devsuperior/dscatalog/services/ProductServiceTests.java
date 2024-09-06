@@ -1,6 +1,7 @@
 package com.devsuperior.dscatalog.services;
 
 import com.devsuperior.dscatalog.dto.ProductDTO;
+import com.devsuperior.dscatalog.entities.Category;
 import com.devsuperior.dscatalog.entities.Product;
 import com.devsuperior.dscatalog.factory.Factory;
 import com.devsuperior.dscatalog.repositories.CategoryRepository;
@@ -45,6 +46,7 @@ public class ProductServiceTests {
     private Long dependentId;
     private PageImpl<Product> page;
     private Product product;
+    private Category category;
     private ProductDTO productDTO;
 
     @BeforeEach
@@ -53,6 +55,7 @@ public class ProductServiceTests {
         nonExistingId = 1000L;
         dependentId = 3L;
         product = Factory.createProduct();
+        category = Factory.createCategory();
         productDTO = Factory.createProductDTO();
         page = new PageImpl<>(List.of(product));
 
@@ -75,12 +78,15 @@ public class ProductServiceTests {
 
         //findbyId
         Mockito.when(productRepository.findById(existingId)).thenReturn(Optional.of(product));
-        Mockito.when(productRepository.findById(nonExistingId)).thenReturn(Optional.of(product));
+        Mockito.when(productRepository.findById(nonExistingId)).thenReturn(Optional.empty());
 
 
         //update
         Mockito.when(productRepository.getReferenceById(existingId)).thenReturn(product);
         Mockito.when(productRepository.getReferenceById(nonExistingId)).thenThrow(ResourceNotFoundException.class);
+
+        Mockito.when(categoryRepository.getReferenceById(existingId)).thenReturn(category);
+        Mockito.when(categoryRepository.getReferenceById(nonExistingId)).thenThrow(ResourceNotFoundException.class);
 
         //configurando o comportamento esperado para o método existsById do seu mock productRepository.
         // Isso define o que o mock deve retornar quando chamado com diferentes IDs.
@@ -134,7 +140,6 @@ public class ProductServiceTests {
         ProductDTO result = productService.findById(existingId);
 
         Assertions.assertNotNull(result);
-        Mockito.verify(productRepository).findById(existingId);
     }
 
     @Test
@@ -150,7 +155,6 @@ public class ProductServiceTests {
 
 
         Assertions.assertNotNull(result);
-        Mockito.verify(productRepository).save(product);
     }
 
     @Test

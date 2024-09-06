@@ -432,9 +432,109 @@ Só reaproveitar os atributos criados e usar o any() de novo.
 
 ![img_29.png](img_29.png)
 
+## Testes camada web
 
+Testaremos agora alguns endpoints.
 
+Mesma coisa, criar pacote de controller em tests com o nome da classe a ser testada, neste caso: ProductControllerTest
 
+Anotação: @WebMvcTest(ProductResource.class)
 
+Para chamar os endpoints (fazer requisição), usaremos o @MockMvc.
 
+E, além disso, importaremos o service usando @MockBean (lembra do que falamos antes, se é @ExtendWith é @Mock,
+se é @WebMvcTest ou @SpringBootTest, usamos @Mockbean para carregar o contexto da aplicação).
+
+![img_30.png](img_30.png)
+
+### findAll camada Web
+
+Primeira coisa, simular os comportamentos do service. Sabemos que nesse método, por exemplo, ele usa o findAllPaged
+do service, então simularemos no setUp, igual nos testes do service.
+
+![img_31.png](img_31.png)
+
+Criamos o nosso ProductDto + a Page e fazemos a mesma simulação de comportamento 👇
+
+![img_32.png](img_32.png)
+
+No teste em sí, será bem fácil. Usaremos o mockMvc, veja:
+
+Chamamos o perform no nosso método Http desejado e usamos o expect para o status esperado.
+
+![img_33.png](img_33.png)
+
+## Melhor legibilidade e negociação de conteúdo
+
+Caso seja melhor e mais legível, você pode também fazer em partes.
+
+Basicamente, colocar o perform dentro de uma variável do tipo ResultActions e realizar o expect em outra linha:
+
+![img_34.png](img_34.png)
+
+Além disso, é interessante colocarmos o mediatype do tipo JSON dentro do perform:
+
+![img_35.png](img_35.png)
+
+## Testando findById
+
+Primeira coisa, importar de novo o "existingId e nonExistingId".
+
+O método, será bem parecido com o acima.
+
+Testando comportamento:
+
+![img_40.png](img_40.png)
+
+![img_36.png](img_36.png)
+
+## Testando update
+
+A unica coisa que muda é o perfom. Ele será put ao invés de get.
+
+E seguinte, precisamos converter de Java para JSON, usando ObjectMapper, veja:
+
+Import:
+
+![img_38.png](img_38.png)
+
+Simulando comportamento;
+
+![img_39.png](img_39.png)
+
+Id existente:
+
+![img_37.png](img_37.png)
+
+Id não existente:
+
+![img_41.png](img_41.png)
+
+## Delete
+
+O nosso método delete do service é **void** tem 3 possibilidades: deletar, id não encontrado e violação de
+integridade (quando um id de um objeto está associado a outro):
+
+![img_42.png](img_42.png)
+
+Como sabemos, em teste, quando é void mudamos a ordem quando vamos fazer a simulação, primeiro a consequência, depois
+o when:
+
+Comportamento: 
+
+![img_43.png](img_43.png)
+
+Métodos:
+
+![img_44.png](img_44.png)
+
+## Insert
+
+Comportamento:
+
+![img_45.png](img_45.png)
+
+Método:
+
+![img_46.png](img_46.png)
 
