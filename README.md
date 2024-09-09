@@ -538,3 +538,83 @@ Método:
 
 ![img_46.png](img_46.png)
 
+
+## Primeiro teste de integração
+
+Agora sim! Testaremos mais deu um componente de forma integrada, como eles estão conversando entre em sí para atingir um
+objetivo específico.
+
+São testes mais lentos, pois precisamos carregar o contexto da aplicação. Não é teste para rodar toda hora igual de
+unidade.
+
+### Teste de integração - Service e Repository
+
+Faremos uma operação do service para que ele desça até o H2 para termos certeza de que tudo no banco de dados está ok!
+
+1. Criaremos um ProductServiceIT (para testar a integração)
+
+Terá @SpringBootTest (pois carregaremos o contexto da aplicação).
+
+2. Colocar BeforeEach com SetUp e injetar o ProductService com autowired.
+
+Sim, o ProductService será injetado com todas as duas regras de negócio, afinal a ideia é de fato testar tudo.
+
+![img_47.png](img_47.png)
+
+Como sabemos a quantidade de produtos existentes na tabela, criamos uma variável com a numeração correta para ser
+testado.
+
+### Delete (Integração)
+
+![img_48.png](img_48.png)
+
+Como esse teste é diferente dos outros, ele irá afetar momentaneamente o banco de dados. Para que ele não influencie
+outros testes, colocaremos a anotação @Transactional lá em cima da classe.
+
+Assim, a cada teste, ele dará um rollback no banco de dados.
+
+### findAllPaged (Integração)
+
+### findAllPaged (passando tamanho de página)
+
+![img_49.png](img_49.png)
+
+### findAllPaged (não existente)
+
+![img_50.png](img_50.png)
+
+### findAllPaged (sorted por nome)
+
+![img_51.png](img_51.png)
+
+## Teste integração camada web (findAll)
+
+Chamaremos o endpoint, mas desceremos nas camadas ATÉ O BANCO DE DADOS: service > repository.
+
+1. Mesmo esquema, criar um ProductControllerIT
+
+Anotação SpringBootTest e AutoConfigureMockMvc (exatamente como falamos na tabela anterior).
+
+![img_52.png](img_52.png)
+
+### findAll
+
+A mesma ideia dos outros testes, utilizando o MockMvc para performar as chamadas, alocando em uma variável do tipo
+ResultActions e depois fazemos as assertions.
+
+Frisando novamente, as assertions usando o JSON path é literalmente acessando as propriedades que o Postman retorna para
+gente.
+
+![img_53.png](img_53.png)
+
+## Update
+
+![img_54.png](img_54.png)
+
+![img_55.png](img_55.png)
+
+## Desafio TDD Event City
+
+[Drive](https://drive.google.com/drive/folders/1vONBDAbswa4fpZtWX2zkuxM4dajZ-kAm)
+[Material de apoio](https://drive.google.com/drive/folders/1Bg8pH4xbc07jSZsO3WImQPnw44aP04WN)
+
